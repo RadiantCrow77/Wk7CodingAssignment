@@ -2,12 +2,13 @@ package projects;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
-import projects.dao.DbConnection;
 import projects.entity.Project;
+import projects.dao.DbConnection;
 import projects.exception.DbException;
 import projects.service.ProjectService;
 
@@ -15,9 +16,12 @@ public class Projects {
 
 	private ProjectService projectService = new ProjectService();
 	private Scanner scanner = new Scanner(System.in);
+	private Project curProject;
 
 	// @ formatter:off
-	private List<String> operations = List.of("1) Add a Project");
+	private List<String> operations = List.of("1) Add a Project", 
+			"2) List projects",
+			"3) Select project by Project ID");
 	// @formatter:on
 
 	private void processUserSelections() {
@@ -33,6 +37,12 @@ public class Projects {
 				case 1:
 					createProject();
 					break;
+				case 2:
+					listProjects();
+					break;
+				case 3:
+					selectProject();
+					break;
 				default:
 					System.out.println("\n" + selection + " is not a valid selection. Try again.");
 					break;
@@ -43,7 +53,15 @@ public class Projects {
 		}
 	}
 
+	private void listProjects() { // option 2
+		List<Project> projects = projectService.fetchAllProjects();
 
+		System.out.println("\nProjects:");
+
+		// print each at a time
+		projects.forEach(
+				project -> System.out.println("   " + project.getProjectId() + ": " + project.getProjectName()));
+	}
 
 	private boolean exitMenu() {
 		System.out.println("\nExiting the menu.");
@@ -81,40 +99,46 @@ public class Projects {
 
 		String input = scanner.nextLine();
 		return input.isBlank() ? null : input.trim();
+
 	}
 
 	private void printOperations() {
 		System.out.println("\nThese are the available selections. Press Enter to quit: ");
 		// print all available menu options:
 		operations.forEach(line -> System.out.println(" " + line));
+		
+		// print current project when available menu selections are displayed to user
+		if(Objects.isNull(curProject)) {
+			System.out.println("\nYou are not working with a project.");
+		}else {
+			System.out.println("\nYou are working with project: " + curProject);
+		}
 	}
-	
+
 	private void createProject() {
 		String projectName = getStringInput("Enter the Project name.");
 		BigDecimal estimatedHours = getDecimalInput("Enter the estimated hours.");
 		BigDecimal actualHours = getDecimalInput("Enter the actual hours.");
 		Integer difficulty = getIntInput("Enter the project difficulty, scale from 1-5.");
 		String notes = getStringInput("Enter any notes for the project.");
-		
+
 		Project project = new Project(); // new project object :)
-		
+
 		// setters for each
 		project.setProjectName(projectName);
 		project.setEstimatedHours(estimatedHours);
 		project.setActualHours(actualHours);
 		project.setDifficulty(difficulty);
 		project.setNotes(notes);
-		
+
 		// call the addProject() method on projectService obj, pass it Project obj
 		Project dbProject = projectService.addProject(project);
-		
-		System.out.println("You have successfully created project: "+dbProject);
+
+		System.out.println("You have successfully created project: " + dbProject);
 	}
-	
 
 	private BigDecimal getDecimalInput(String prompt) {
 		String input = getStringInput(prompt);
-
 
 		if (Objects.isNull(input)) {
 			return null;
@@ -126,7 +150,17 @@ public class Projects {
 		}
 	}
 
+	// select project method
+	private void selectProject() {
+		listProjects();
+		Integer projectId = getIntInput("Please enter a project ID to select a project.");
 
+		// unselect current project by assigning null
+		curProject = null;
+
+		// throws an exception if invalid proj ID is entered
+		curProject = projectService.fetchProjectById(projectId);
+	}
 
 	public static void main(String[] args) {
 		// 3. in the main method, create a new ProjectsApp obj and call the method

@@ -5,10 +5,10 @@ import java.sql.SQLException;
 @SuppressWarnings("serial")
 
 public class DbException extends RuntimeException {
-	// methods from superclass
 	public DbException() {
 
 	}
+	// methods from superclass
 
 	public DbException(String message) {
 		super(message);
