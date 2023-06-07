@@ -21,7 +21,9 @@ public class Projects {
 	// @ formatter:off
 	private List<String> operations = List.of("1) Add a Project", 
 			"2) List projects",
-			"3) Select project by Project ID");
+			"3) Select project by Project ID",
+			"4) Update project details",
+			"5) Delete a project");
 	// @formatter:on
 
 	private void processUserSelections() {
@@ -43,6 +45,12 @@ public class Projects {
 				case 3:
 					selectProject();
 					break;
+				case 4:
+					updateProjectDetails();
+					break;
+				case 5:
+					deleteProject();
+					break;
 				default:
 					System.out.println("\n" + selection + " is not a valid selection. Try again.");
 					break;
@@ -52,6 +60,58 @@ public class Projects {
 			}
 		}
 	}
+
+	private void deleteProject() {
+	listProjects();
+	Integer projectId = getIntInput("Please enter Project ID to delete. ");
+	projectService.deleteProject(projectId);
+	
+	System.out.println("Project w/ ID:  "+projectId + " was deleted succesfully.");
+	
+	if(Objects.nonNull(curProject) && curProject.getProjectId().equals(projectId)) {
+		curProject = null;
+	}
+	
+	}
+
+	private void updateProjectDetails() {
+	if (Objects.isNull(curProject)){ // if current project is null, prompt user to select one
+		System.out.println("\nPlease select a project.");
+		return;
+	}
+	// WK 11 - start
+	// WK 11: for each field in the Project obj, print msg along w/ current setting in curProject
+			String projectName = getStringInput("Enter the Project name. ["+ curProject.getProjectName()+"]"); // added curProject getter wk 11
+			BigDecimal estimatedHours = getDecimalInput("Enter the estimated hours. ["+curProject.getEstimatedHours()+"]");
+			BigDecimal actualHours = getDecimalInput("Enter the actual hours. ["+curProject.getActualHours()+"]");
+			Integer difficulty = getIntInput("Enter the project difficulty, scale from 1-5. ["+curProject.getDifficulty()+"]");
+			String notes = getStringInput("Enter any notes for the project. ["+curProject.getNotes()+"]");
+
+			
+			Project project = new Project(); // new project object :)
+	
+			
+			
+			// WK 11: steps c-g on pg 14
+			project.setProjectId(curProject.getProjectId());
+			
+			// WK 11 other setters
+			// WK 11: create new project obj, if user input != null, add value to project object, if null, add value from curProject, repeat for all proj variables
+			project.setProjectName(Objects.isNull(projectName) ? curProject.getProjectName() : projectName);
+			project.setEstimatedHours(Objects.isNull(estimatedHours) ? curProject.getEstimatedHours() : estimatedHours);
+			project.setActualHours(Objects.isNull(actualHours) ? curProject.getActualHours() : actualHours);
+			project.setDifficulty(Objects.isNull(difficulty) ? curProject.getDifficulty() : difficulty);
+			project.setNotes(Objects.isNull(notes) ? curProject.getNotes() : notes);
+			
+			
+			projectService.modifyProjectDetails(project);
+			
+			curProject = projectService.fetchProjectById(curProject.getProjectId());
+	}
+
+
+	
+
 
 	private void listProjects() { // option 2
 		List<Project> projects = projectService.fetchAllProjects();
@@ -135,6 +195,7 @@ public class Projects {
 		Project dbProject = projectService.addProject(project);
 
 		System.out.println("You have successfully created project: " + dbProject);
+		curProject = projectService.fetchProjectById(dbProject.getProjectId()); // 
 	}
 
 	private BigDecimal getDecimalInput(String prompt) {
